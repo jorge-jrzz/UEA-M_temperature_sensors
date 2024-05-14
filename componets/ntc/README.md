@@ -4,7 +4,7 @@ Programa para Arduino que utiliza un sensor NTC (Coeficiente de Temperatura Nega
 
 ## Requisitos
 
-- Placa Arduino (por ejemplo, Arduino UNO)
+- Placa de desarrollo Arduino (Arduino UNO)
 - Sensor NTC (Coeficiente de Temperatura Negativo)
 - Resistencia de referencia (opcional, dependiendo del sensor NTC utilizado)
 - Cableado para conectar el sensor NTC a la placa Arduino
