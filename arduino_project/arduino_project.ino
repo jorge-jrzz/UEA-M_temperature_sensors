@@ -1,11 +1,10 @@
 #include <OneWire.h>
 #include <DallasTemperature.h>
+// Definición del pin digital al que está conectado el sensor DS18B20
+#define ONE_WIRE_BUS 2
 
 // Definición de la constante BETA del sensor NTC
 const float BETA = 3950;
-
-// Definición del pin digital al que está conectado el sensor DS18B20
-#define ONE_WIRE_BUS 2
 
 // Variables para almacenar el valor analógico y la temperatura en grados Celsius
 int analogValue;
@@ -21,11 +20,31 @@ int interval; // Variable para almacenar el intervalo de tiempo entre mediciones
 OneWire oneWire(ONE_WIRE_BUS);
 DallasTemperature sensors(&oneWire);
 
+// Define los pines para cada segmento (a hasta g) del primer display (unidades)
+const int segmentUnitPins[8] = {3, 4, 5, 6, 7, 8, 9}; // Pines para los segmentos a-g
+// Define los números a mostrar en el display de siete segmentos
+const byte unitsNumbers[11] = {
+    B11111100, // 0
+    B01100000, // 1
+    B11011010, // 2
+    B11110010, // 3
+    B01100110, // 4
+    B10110110, // 5
+    B10111110, // 6
+    B11100000, // 7
+    B11111110, // 8
+    B11110110  // 9
+};
+
+// ------------------------------------------------------------
+
 // Prototipos de funciones
 float ntc_sensor();
 float ds18b20_sensor();
 float average_temperature(float celsius_ntc, float celsius_ds18b20);
 int potentiometer_interval();
+void unitDisplayNumber(int num);
+int getUnits(float numero);
 
 void setup()
 {
@@ -34,23 +53,32 @@ void setup()
 
     // Inicialización del sensor DS18B20
     sensors.begin();
+
+    // Establece los pines de los segmentos como salidas
+    for (int i = 0; i < 7; i++)
+    {
+        pinMode(segmentUnitPins[i], OUTPUT);
+    }
 }
 
 void loop()
 {
+    interval = potentiometer_interval();
+    Serial.print("Intervalo de tiempo entre mediciones: ");
+    Serial.print(interval);
+    Serial.println("ms");
+
     average_temp = average_temperature(ntc_sensor(), ds18b20_sensor());
+    // Retardo para la próxima lectura de temperatura
 
     // Impresión de la temperatura medida por el monitor serial
     Serial.print("Temperatura: ");
     Serial.print(average_temp);
     Serial.println(" C");
 
-    interval = potentiometer_interval();
-    Serial.print("Intervalo de tiempo entre mediciones: ");
-    Serial.print(interval);
-    Serial.println("ms");
+    // Muestra las unidades de la temperatura en el display de siete segmentos
+    unitDisplayNumber(getUnits(average_temp));
 
-    // Retardo para la próxima lectura de temperatura
     delay(interval);
 }
 
@@ -96,4 +124,30 @@ int potentiometer_interval()
     interval_of_potentiometer = map(valPotenciometer, 0, 1023, 500, 5000);
 
     return interval_of_potentiometer;
+}
+
+// Función para mostrar un dígito en el display de siete segmentos
+void unitDisplayNumber(int num)
+{
+    // Apaga todos los segmentos
+    for (int i = 0; i < 8; i++)
+    {
+        digitalWrite(segmentUnitPins[i], HIGH); // Alto (apagado)
+    }
+
+    // Activa los segmentos basados en el número a mostrar
+    for (int i = 0; i < 8; i++)
+    {
+        if (bitRead(unitsNumbers[num], i) == LOW)
+        {                                              // Comprueba cada bit del número
+            digitalWrite(segmentUnitPins[7 - i], LOW); // Activa el segmento si el bit es bajo
+        }
+    }
+}
+
+int getUnits(float numero)
+{
+    int entero = numero;        // Convierte el número decimal a un entero
+    int unidades = entero % 10; // Obtiene el módulo 10 para obtener las unidades
+    return unidades;            // Retorna las unidades como un entero
 }
