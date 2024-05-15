@@ -12,6 +12,7 @@ Programa para Arduino que utiliza un sensor NTC (Coeficiente de Temperatura Nega
 ## Conexiones
 
 El sensor NTC debe conectarse a un pin analógico de la placa Arduino.
+
 ![conexiones ntc](../images/conexion_ntc.png)
 
 ## Instalación
