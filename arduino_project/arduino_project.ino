@@ -1,3 +1,4 @@
+#include <Wire.h>
 #include <OneWire.h>
 #include <DallasTemperature.h>
 // Definición del pin digital al que está conectado el sensor DS18B20
@@ -36,6 +37,23 @@ const byte unitsNumbers[11] = {
     B11110110  // 9
 };
 
+// Dirección I2C del módulo HW-171
+const int hw171Address = 0x20;
+
+// Definición de los patrones de segmentos para cada dígito del 0 al 9
+byte tensNumbers[10] = {
+    0b00111111, // 0
+    0b00000110, // 1
+    0b01011011, // 2
+    0b01001111, // 3
+    0b01100110, // 4
+    0b01101101, // 5
+    0b01111101, // 6
+    0b00000111, // 7
+    0b01111111, // 8
+    0b01101111  // 9
+};
+
 // ------------------------------------------------------------
 
 // Prototipos de funciones
@@ -44,7 +62,9 @@ float ds18b20_sensor();
 float average_temperature(float celsius_ntc, float celsius_ds18b20);
 int potentiometer_interval();
 void unitDisplayNumber(int num);
+void tensDisplayNumber(int num);
 int getUnits(float numero);
+int getTens(float numero);
 
 void setup()
 {
@@ -59,6 +79,8 @@ void setup()
     {
         pinMode(segmentUnitPins[i], OUTPUT);
     }
+
+    Wire.begin(); // Inicia la comunicación I2C
 }
 
 void loop()
@@ -78,6 +100,8 @@ void loop()
 
     // Muestra las unidades de la temperatura en el display de siete segmentos
     unitDisplayNumber(getUnits(average_temp));
+    // Muestra las decenas de la temperatura en el display de siete segmentos utilizando el HW-171
+    tensDisplayNumber(getTens(average_temp));
 
     delay(interval);
 }
@@ -145,9 +169,24 @@ void unitDisplayNumber(int num)
     }
 }
 
+// Función para mostrar un dígito en el display de siete segmentos utilizando el HW-171
+void tensDisplayNumber(int num)
+{
+    Wire.beginTransmission(hw171Address); // Inicia la transmisión hacia la dirección del módulo
+    Wire.write(tensNumbers[num]);         // Escribe el patrón para el número al módulo HW-171
+    Wire.endTransmission();               // Finaliza la transmisión
+}
+
 int getUnits(float numero)
 {
     int entero = numero;        // Convierte el número decimal a un entero
     int unidades = entero % 10; // Obtiene el módulo 10 para obtener las unidades
     return unidades;            // Retorna las unidades como un entero
+}
+
+int getTens(float numero)
+{
+    int entero = numero;              // Convierte el número decimal a un entero
+    int decenas = (entero / 10) % 10; // Obtiene el cociente de la división entera entre 10 y luego el módulo 10 para obtener las decenas
+    return decenas;                   // Retorna las decenas como un entero
 }
