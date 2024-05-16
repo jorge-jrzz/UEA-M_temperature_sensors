@@ -20,11 +20,11 @@ El sistema de medición de temperatura tiene las siguientes características:
 - Expansor de E/S I2C (HW-171)
 - Resistencias y componentes electrónicos varios
 
-## Conexiones
+## Conexiones:
+
+![conexiones proyecto](./images/conexion_temperature_sensors.png)
 
 ## Instalación:
-
-### Implementación en Arduino
 
 1. Instala las bibliotecas de `Wire.h`, `OneWire` y `DallasTemperature` en tu entorno de desarrollo Arduino si aún no lo has hecho. Puedes hacerlo desde el Administrador de bibliotecas en el IDE de Arduino.
 2. Carga el código fuente `arduino_project.ino` y ábrelo en tu entorno de desarrollo Arduino.

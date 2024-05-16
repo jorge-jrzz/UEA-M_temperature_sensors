@@ -13,7 +13,7 @@ Se muestra cómo utilizar un display de siete segmentos con un expansor de E/S H
 
 Conecta el display de siete segmentos al módulo expansor HW-171 siguiendo el esquema de pines adecuado:
 
-![conexiones expansor HW-171](../images/conexion_expander_pcf8574.png)
+![conexiones expansor HW-171](./../../images/conexion_expander_pcf8574.png)
 
 ## Instalación
 

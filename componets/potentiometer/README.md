@@ -12,7 +12,7 @@ Programa para Arduino que lee el valor de un potenciómetro conectado a uno de s
 
 El potenciómetro debe conectarse a uno de los pines analógicos de la placa Arduino:
 
-![conexiones potenciometro](../images/conexion_potentiometer.png)
+![conexiones potenciometro](./../../images/conexion_potentiometer.png)
 
 ## Instalación
 

@@ -13,7 +13,7 @@ Programa para Arduino que muestra números del 0 al 9 en un display de siete seg
 
 El display de siete segmentos debe conectarse a los pines digitales de la placa Arduino según el esquema de conexiones proporcionado en el código. Asegúrate de revisar la hoja de datos del display para conocer las especificaciones de conexión exactas; en este caso, se utilizo un Display de 7 segmentos _cátodo común_:
 
-![conexiones 7 segmentos](../images/conexion_7_segment.png)
+![conexiones 7 segmentos](./../../images/conexion_7_segment.png)
 
 ## Instalación
 

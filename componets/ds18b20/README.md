@@ -13,7 +13,7 @@ Programa para Arduino que utiliza un sensor DS18B20 para medir la temperatura am
 
 El sensor DS18B20 debe conectarse al pin digital especificado en el código. Asegúrate de revisar la hoja de datos del sensor DS18B20 para conocer las especificaciones de los pines del módulo.
 
-![conexiones DS18B20](../images/conexion_ds18b20.png)
+![conexiones DS18B20](./../../images/conexion_ds18b20.png)
 
 ## Instalación
 
