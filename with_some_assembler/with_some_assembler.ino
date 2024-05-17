@@ -1,29 +1,24 @@
 #include <Wire.h>
 #include <OneWire.h>
 #include <DallasTemperature.h>
-// Definición del pin digital al que está conectado el sensor DS18B20
+
 #define ONE_WIRE_BUS 2
 
-// Definición de la constante BETA del sensor NTC
 const float BETA = 3950;
 
-// Variables para almacenar el valor analógico y la temperatura en grados Celsius
 int analogValue;
 float average_temp;
 
-// Definición del pin analógico al que está conectado el potenciómetro
 const int analogPinPotenciometer = A1;
-// Variable para almacenar el valor leído del potenciómetro
-int valPotenciometer;
-int interval; // Variable para almacenar el intervalo de tiempo entre mediciones
 
-// Inicialización de la conexión OneWire y del sensor DallasTemperature
+int valPotenciometer;
+int interval;
+
 OneWire oneWire(ONE_WIRE_BUS);
 DallasTemperature sensors(&oneWire);
 
-// Define los pines para cada segmento (a hasta g) del primer display (unidades)
-const int segmentUnitPins[7] = {3, 4, 5, 6, 7, 8, 9}; // Pines para los segmentos a-g
-// Define los números a mostrar en el display de siete segmentos
+const int segmentUnitPins[7] = {3, 4, 5, 6, 7, 8, 9};
+
 const byte unitsNumbers[10] = {
     B11111100, // 0
     B01100000, // 1
@@ -37,10 +32,8 @@ const byte unitsNumbers[10] = {
     B11110110  // 9
 };
 
-// Dirección I2C del módulo HW-171
 const int hw171Address = 0x20;
 
-// Definición de los patrones de segmentos para cada dígito del 0 al 9
 byte tensNumbers[10] = {
     0b00111111, // 0
     0b00000110, // 1
@@ -56,7 +49,6 @@ byte tensNumbers[10] = {
 
 // ------------------------------------------------------------
 
-// Prototipos de funciones
 float ntc_sensor();
 float ds18b20_sensor();
 float average_temperature(float celsius_ntc, float celsius_ds18b20);
@@ -68,19 +60,14 @@ int getTens(float numero);
 
 void setup()
 {
-    // Inicialización de la comunicación serial para la salida de datos
     Serial.begin(9600);
-
-    // Inicialización del sensor DS18B20
     sensors.begin();
-
-    // Establece los pines de los segmentos como salidas
     for (int i = 0; i < 7; i++)
     {
         pinMode(segmentUnitPins[i], OUTPUT);
     }
 
-    Wire.begin(); // Inicia la comunicación I2C
+    Wire.begin();
 }
 
 void loop()
@@ -90,17 +77,18 @@ void loop()
     Serial.print(interval);
     Serial.println("ms");
 
-    average_temp = average_temperature(ntc_sensor(), ds18b20_sensor());
-    // Retardo para la próxima lectura de temperatura
+    Serial.print("Temperatura del NTC: ");
+    Serial.println(ntc_sensor());
+    Serial.print("Temperatura delDALLAS: ");
+    Serial.println(ds18b20_sensor());
 
-    // Impresión de la temperatura medida por el monitor serial
+    average_temp = average_temperature(ntc_sensor(), ds18b20_sensor());
+
     Serial.print("Temperatura: ");
     Serial.print(average_temp);
     Serial.println(" C");
 
-    // Muestra las unidades de la temperatura en el display de siete segmentos
     unitDisplayNumber(getUnits(average_temp));
-    // Muestra las decenas de la temperatura en el display de siete segmentos utilizando el HW-171
     tensDisplayNumber(getTens(average_temp));
 
     delay(interval);
@@ -109,12 +97,7 @@ void loop()
 float ntc_sensor()
 {
     float celsius_of_ntc;
-    // Lectura del valor analógico del pin A0, donde está conectado el sensor NTC
     analogValue = analogRead(A0);
-
-    // Cálculo de la temperatura en grados Celsius utilizando la ecuación de Steinhart-Hart
-    // Esta ecuación se basa en la variación de la resistencia del sensor con la temperatura
-    // y la constante BETA que caracteriza el sensor
     celsius_of_ntc = 1 / (log(1 / (1023. / analogValue - 1)) / BETA + 1.0 / 298.15) - 273.15;
 
     return celsius_of_ntc;
@@ -122,71 +105,136 @@ float ntc_sensor()
 
 float ds18b20_sensor()
 {
-    // Solicita la temperatura al sensor DS18B20
     sensors.requestTemperatures();
 
-    // Lee la temperatura en grados Celsius desde el sensor DS18B20
-    float celsius_of_ds18b20 = sensors.getTempCByIndex(0); // Se asume que solo hay un sensor conectado
+    float celsius_of_ds18b20 = sensors.getTempCByIndex(0);
 
     return celsius_of_ds18b20;
 }
 
+// float average_temperature(float celsius_ntc, float celsius_ds18b20)
+// {
+//     float average_temp = (celsius_ntc + celsius_ds18b20) / 2;
+
+//     return average_temp;
+// }
+
 float average_temperature(float celsius_ntc, float celsius_ds18b20)
 {
-    // Cálculo del promedio de las temperaturas medidas por el sensor NTC y el sensor DS18B20
-    float average_temp = (celsius_ntc + celsius_ds18b20) / 2;
+    // Convertir los valores float a enteros escalados
+    int16_t celsius_ntc_int = celsius_ntc * 100;
+    int16_t celsius_ds18b20_int = celsius_ds18b20 * 100;
+    int16_t average_temp_int;
 
-    return average_temp;
+    asm volatile(
+        "movw r24, %1\n\t"        // Cargar celsius_ntc_int en r24:r25
+        "movw r26, %2\n\t"        // Cargar celsius_ds18b20_int en r26:r27
+        "add r24, r26\n\t"        // Sumar los bytes menos significativos
+        "adc r25, r27\n\t"        // Sumar los bytes más significativos con acarreo
+        "lsr r25\n\t"             // Desplazar un bit a la derecha r25
+        "ror r24\n\t"             // Rotar un bit a la derecha r24
+        "movw %0, r24\n\t"        // Guardar el resultado en average_temp_int
+        : "=r" (average_temp_int)
+        : "r" (celsius_ntc_int), "r" (celsius_ds18b20_int)
+        : "r24", "r25", "r26", "r27"
+    );
+
+    // Convertir el resultado de vuelta a float
+    return average_temp_int / 100.0;
 }
 
 int potentiometer_interval()
 {
     int interval_of_potentiometer;
-    // Lectura del valor analógico del potenciómetro
     valPotenciometer = analogRead(analogPinPotenciometer);
-
     interval_of_potentiometer = map(valPotenciometer, 0, 1023, 500, 5000);
 
     return interval_of_potentiometer;
 }
 
-// Función para mostrar un dígito en el display de siete segmentos
 void unitDisplayNumber(int num)
 {
-    // Apaga todos los segmentos
     for (int i = 0; i < 8; i++)
     {
-        digitalWrite(segmentUnitPins[i], HIGH); // Alto (apagado)
+        digitalWrite(segmentUnitPins[i], HIGH);
     }
 
-    // Activa los segmentos basados en el número a mostrar
     for (int i = 0; i < 8; i++)
     {
         if (bitRead(unitsNumbers[num], i) == LOW)
-        {                                              // Comprueba cada bit del número
-            digitalWrite(segmentUnitPins[7 - i], LOW); // Activa el segmento si el bit es bajo
+        {
+            digitalWrite(segmentUnitPins[7 - i], LOW);
         }
     }
 }
 
-// Función para mostrar un dígito en el display de siete segmentos utilizando el HW-171
 void tensDisplayNumber(int num)
 {
-    Wire.beginTransmission(hw171Address); // Inicia la transmisión hacia la dirección del módulo
-    Wire.write(tensNumbers[num]);         // Escribe el patrón para el número al módulo HW-171
-    Wire.endTransmission();               // Finaliza la transmisión
+    Wire.beginTransmission(hw171Address);
+    Wire.write(tensNumbers[num]);
+    Wire.endTransmission();
 }
+
+// int getUnits(float numero)
+// {
+//     int entero = numero;
+//     int unidades = entero % 10;
+//     return unidades;
+// }
 
 int getUnits(float numero)
 {
-    int entero = numero;        // Convierte el número decimal a un entero
-    int unidades = entero % 10; // Obtiene el módulo 10 para obtener las unidades
-    return unidades;            // Retorna las unidades como un entero
+    int entero = (int)numero;
+    int unidades;
+
+    asm volatile(
+        "ldi r18, 10\n\t"      // Load immediate value 10 into register r18
+        "movw r24, %1\n\t"     // Move the value of entero into r24:r25
+        "1: subi r24, 10\n\t"  // Subtract 10 from r24
+        "brcs 2f\n\t"          // If carry set, branch to label 2
+        "rjmp 1b\n\t"          // Jump back to label 1
+        "2: subi r24, -10\n\t" // Add 10 to r24 (undo last subtraction)
+        "mov %0, r24\n\t"      // Move the final result (units) to the output variable
+        : "=r"(unidades)       // Output operands
+        : "r"(entero)          // Input operands
+        : "r18", "r24", "r25"  // Clobbers
+    );
+
+    return unidades;
 }
+
+// int getTens(float numero)
+// {
+//     int entero = numero;
+//     int decenas = (entero / 10) % 10;
+//     return decenas;
+// }
 
 int getTens(float numero)
 {
-    int entero = numero;              // Convierte el número decimal a un entero
-    int decenas = (entero / 10) % 10; // Obtiene el cociente de la división entera entre 10 y luego el módulo 10 para obtener las decenas
-    return decenas;                   // Retorna las decenas como un entero
+    int entero = (int)numero;
+    int decenas;
+
+    asm volatile(
+        // Dividir por 10
+        "ldi r18, 10\n\t"  // Load immediate value 10 into register r18
+        "clr r25\n\t"      // Clear register r25 (high byte of quotient)
+        "movw r24, %1\n\t" // Move the value of entero into r24:r25
+        "divloop:\n\t"
+        "cp r24, r18\n\t"  // Compare r24 with 10
+        "brcs enddiv\n\t"  // If carry set, branch to enddiv
+        "subi r24, 10\n\t" // Subtract 10 from r24
+        "inc r25\n\t"      // Increment the quotient
+        "rjmp divloop\n\t" // Repeat the loop
+        "enddiv:\n\t"
+        // Obtener el dígito de las decenas
+        "mov r24, r25\n\t"    // Move the quotient to r24
+        "andi r24, 0x0F\n\t"  // Mask the lower nibble to get the remainder
+        "mov %0, r24\n\t"     // Move the final result (tens) to the output variable
+        : "=r"(decenas)       // Output operands
+        : "r"(entero)         // Input operands
+        : "r18", "r24", "r25" // Clobbers
+    );
+
+    return decenas;
 }
