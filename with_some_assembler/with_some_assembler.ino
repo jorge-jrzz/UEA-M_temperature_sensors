@@ -58,8 +58,8 @@ void tensDisplayNumber(int num);
 int getUnits(float numero);
 int getTens(float numero);
 
-void setup()
-{
+void setup() {
+
     Serial.begin(9600);
     sensors.begin();
     for (int i = 0; i < 7; i++)
@@ -70,19 +70,17 @@ void setup()
     Wire.begin();
 }
 
-void loop()
-{
+void loop() {
+
     interval = potentiometer_interval();
     Serial.print("Intervalo de tiempo entre mediciones: ");
     Serial.print(interval);
     Serial.println("ms");
 
-    Serial.print("Temperatura del NTC: ");
-    Serial.println(ntc_sensor());
-    Serial.print("Temperatura delDALLAS: ");
-    Serial.println(ds18b20_sensor());
+    float ntc_temp = ntc_sensor();
+    float ds18b20_temp = ds18b20_sensor();
 
-    average_temp = average_temperature(ntc_sensor(), ds18b20_sensor());
+    average_temp = average_temperature(ntc_temp, ds18b20_temp);
 
     Serial.print("Temperatura: ");
     Serial.print(average_temp);
@@ -94,8 +92,8 @@ void loop()
     delay(interval);
 }
 
-float ntc_sensor()
-{
+float ntc_sensor() {
+
     float celsius_of_ntc;
     analogValue = analogRead(A0);
     celsius_of_ntc = 1 / (log(1 / (1023. / analogValue - 1)) / BETA + 1.0 / 298.15) - 273.15;
@@ -103,8 +101,8 @@ float ntc_sensor()
     return celsius_of_ntc;
 }
 
-float ds18b20_sensor()
-{
+float ds18b20_sensor() {
+
     sensors.requestTemperatures();
 
     float celsius_of_ds18b20 = sensors.getTempCByIndex(0);
@@ -119,8 +117,8 @@ float ds18b20_sensor()
 //     return average_temp;
 // }
 
-float average_temperature(float celsius_ntc, float celsius_ds18b20)
-{
+float average_temperature(float celsius_ntc, float celsius_ds18b20) {
+
     // Convertir los valores float a enteros escalados
     int16_t celsius_ntc_int = celsius_ntc * 100;
     int16_t celsius_ds18b20_int = celsius_ds18b20 * 100;
@@ -143,8 +141,8 @@ float average_temperature(float celsius_ntc, float celsius_ds18b20)
     return average_temp_int / 100.0;
 }
 
-int potentiometer_interval()
-{
+int potentiometer_interval() {
+
     int interval_of_potentiometer;
     valPotenciometer = analogRead(analogPinPotenciometer);
     interval_of_potentiometer = map(valPotenciometer, 0, 1023, 500, 5000);
@@ -152,38 +150,34 @@ int potentiometer_interval()
     return interval_of_potentiometer;
 }
 
-void unitDisplayNumber(int num)
-{
-    for (int i = 0; i < 8; i++)
-    {
+void unitDisplayNumber(int num) {
+
+    for (int i = 0; i < 8; i++) {
         digitalWrite(segmentUnitPins[i], HIGH);
     }
 
-    for (int i = 0; i < 8; i++)
-    {
-        if (bitRead(unitsNumbers[num], i) == LOW)
-        {
+    for (int i = 0; i < 8; i++) {
+        if (bitRead(unitsNumbers[num], i) == LOW) {
             digitalWrite(segmentUnitPins[7 - i], LOW);
         }
     }
 }
 
-void tensDisplayNumber(int num)
-{
+void tensDisplayNumber(int num) {
+
     Wire.beginTransmission(hw171Address);
     Wire.write(tensNumbers[num]);
     Wire.endTransmission();
 }
 
-// int getUnits(float numero)
-// {
+// int getUnits(float numero) {
 //     int entero = numero;
 //     int unidades = entero % 10;
 //     return unidades;
 // }
 
-int getUnits(float numero)
-{
+int getUnits(float numero) {
+
     int entero = (int)numero;
     int unidades;
 
@@ -203,15 +197,14 @@ int getUnits(float numero)
     return unidades;
 }
 
-// int getTens(float numero)
-// {
+// int getTens(float numero) {
 //     int entero = numero;
 //     int decenas = (entero / 10) % 10;
 //     return decenas;
 // }
 
-int getTens(float numero)
-{
+int getTens(float numero) {
+
     int entero = (int)numero;
     int decenas;
 
