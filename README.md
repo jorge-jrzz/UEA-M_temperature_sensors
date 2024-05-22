@@ -30,6 +30,13 @@ El sistema de medición de temperatura tiene las siguientes características:
 2. Carga el código fuente `arduino_project.ino` y ábrelo en tu entorno de desarrollo Arduino.
 3. Observa los display de siete segmentos mostrar la temperatura.
 
+## Notes:
+
+- [Reporte del proyecto](./notes/ReporteMicrocontroladores.pdf)
+- [Notas del código](./notes/Notas.pdf)
+
+notes/Reporte microcontroladores.pdf
+
 ## Licencia
 
 Este proyecto está bajo la Licencia MIT. Consulta el archivo [licensia](./LICENSE) para obtener más información.
