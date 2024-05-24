@@ -88,7 +88,7 @@ void loop() {
     interval = potentiometer_interval();
     Serial.print("Intervalo de tiempo entre mediciones: ");
     Serial.print(interval);
-    Serial.println("ms");
+    Serial.println(" ms");
 
     // Lectura de la temperatura de los sensores NTC y DS18B20
     float ntc_temp = ntc_sensor();

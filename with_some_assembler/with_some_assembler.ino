@@ -62,8 +62,8 @@ void setup() {
 
     Serial.begin(9600);
     sensors.begin();
-    for (int i = 0; i < 7; i++)
-    {
+
+    for (int i = 0; i < 7; i++) {
         pinMode(segmentUnitPins[i], OUTPUT);
     }
 
@@ -75,7 +75,7 @@ void loop() {
     interval = potentiometer_interval();
     Serial.print("Intervalo de tiempo entre mediciones: ");
     Serial.print(interval);
-    Serial.println("ms");
+    Serial.println(" ms");
 
     float ntc_temp = ntc_sensor();
     float ds18b20_temp = ds18b20_sensor();
@@ -84,7 +84,7 @@ void loop() {
 
     Serial.print("Temperatura: ");
     Serial.print(average_temp);
-    Serial.println(" C");
+    Serial.println(" °C");
 
     unitDisplayNumber(getUnits(average_temp));
     tensDisplayNumber(getTens(average_temp));
@@ -125,13 +125,13 @@ float average_temperature(float celsius_ntc, float celsius_ds18b20) {
     int16_t average_temp_int;
 
     asm volatile(
-        "movw r24, %1\n\t"        // Cargar celsius_ntc_int en r24:r25
-        "movw r26, %2\n\t"        // Cargar celsius_ds18b20_int en r26:r27
-        "add r24, r26\n\t"        // Sumar los bytes menos significativos
-        "adc r25, r27\n\t"        // Sumar los bytes más significativos con acarreo
-        "lsr r25\n\t"             // Desplazar un bit a la derecha r25
-        "ror r24\n\t"             // Rotar un bit a la derecha r24
-        "movw %0, r24\n\t"        // Guardar el resultado en average_temp_int
+        "movw r24, %1\n\t"        // Carga en r24:r25
+        "movw r26, %2\n\t"        // Carga en r26:r27
+        "add r24, r26\n\t"        // Suma menos significativos
+        "adc r25, r27\n\t"        // Suma más significativos
+        "lsr r25\n\t"             // Desplazamiento
+        "ror r24\n\t"             // Rotatación
+        "movw %0, r24\n\t"        // Guardado
         : "=r" (average_temp_int)
         : "r" (celsius_ntc_int), "r" (celsius_ds18b20_int)
         : "r24", "r25", "r26", "r27"
@@ -182,16 +182,16 @@ int getUnits(float numero) {
     int unidades;
 
     asm volatile(
-        "ldi r18, 10\n\t"      // Load immediate value 10 into register r18
-        "movw r24, %1\n\t"     // Move the value of entero into r24:r25
-        "1: subi r24, 10\n\t"  // Subtract 10 from r24
-        "brcs 2f\n\t"          // If carry set, branch to label 2
-        "rjmp 1b\n\t"          // Jump back to label 1
-        "2: subi r24, -10\n\t" // Add 10 to r24 (undo last subtraction)
-        "mov %0, r24\n\t"      // Move the final result (units) to the output variable
-        : "=r"(unidades)       // Output operands
-        : "r"(entero)          // Input operands
-        : "r18", "r24", "r25"  // Clobbers
+        "ldi r18, 10\n\t"      // Carga 10 en r18
+        "movw r24, %1\n\t"     // Carga en r24:r25
+        "1: subi r24, 10\n\t"  // Resta 10 a r24
+        "brcs 2f\n\t"          // Comprobación de carry
+        "rjmp 1b\n\t"          // Salto a 1
+        "2: subi r24, -10\n\t" // Suma 10 a r24
+        "mov %0, r24\n\t"      // Guardado
+        : "=r"(unidades)
+        : "r"(entero)
+        : "r18", "r24", "r25"
     );
 
     return unidades;
@@ -210,23 +210,23 @@ int getTens(float numero) {
 
     asm volatile(
         // Dividir por 10
-        "ldi r18, 10\n\t"  // Load immediate value 10 into register r18
-        "clr r25\n\t"      // Clear register r25 (high byte of quotient)
-        "movw r24, %1\n\t" // Move the value of entero into r24:r25
+        "ldi r18, 10\n\t"  // Cargar 10 en r18
+        "clr r25\n\t"      // Limpiar r25
+        "movw r24, %1\n\t" // cargar en r24:r25
         "divloop:\n\t"
-        "cp r24, r18\n\t"  // Compare r24 with 10
-        "brcs enddiv\n\t"  // If carry set, branch to enddiv
-        "subi r24, 10\n\t" // Subtract 10 from r24
-        "inc r25\n\t"      // Increment the quotient
-        "rjmp divloop\n\t" // Repeat the loop
+        "cp r24, r18\n\t"  // Comparación
+        "brcs enddiv\n\t"  // Comparación de carry
+        "subi r24, 10\n\t" // Resta 10 a r24
+        "inc r25\n\t"      // Incremento
+        "rjmp divloop\n\t" // Salto a divloop
         "enddiv:\n\t"
         // Obtener el dígito de las decenas
-        "mov r24, r25\n\t"    // Move the quotient to r24
-        "andi r24, 0x0F\n\t"  // Mask the lower nibble to get the remainder
-        "mov %0, r24\n\t"     // Move the final result (tens) to the output variable
-        : "=r"(decenas)       // Output operands
-        : "r"(entero)         // Input operands
-        : "r18", "r24", "r25" // Clobbers
+        "mov r24, r25\n\t"    // Mover el resultado a r24
+        "andi r24, 0x0F\n\t"  // Limpiar los bits superiores
+        "mov %0, r24\n\t"     // Guardado
+        : "=r"(decenas)
+        : "r"(entero)
+        : "r18", "r24", "r25"
     );
 
     return decenas;
